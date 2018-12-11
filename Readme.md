@@ -386,7 +386,14 @@ In total, the maximum amount of monthtly registers is 49, however this is not tr
 
 In addition, the statistical parameters of the monthly sales are included.
 
-The parameters
+The statistical parameters considered are:
+
+* Mean
+* Standard deviation
+* 25% quartile
+* 50% quartile
+* 75% quartile
+* Skewness
 
 ```python
 Target = pd.DataFrame(Y,columns=['Active_client'])
@@ -425,15 +432,13 @@ data = pd.DataFrame({
 ```
 
 ```python
-from sklearn.model_selection import train_test_split
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.ensemble import RandomForestRegressor
-from sklearn import metrics
 
 X_train, X_test, y_train, y_test = train_test_split(data, Target, test_size=0.3)
 
 # Instantiate model with 1000 decision trees
-rf = RandomForestClassifier(n_estimators = 50)
+rf = RandomForestClassifier(n_estimators = 1000)
 
 # Train the model on training data
 rf.fit(X_train, y_train)
@@ -441,78 +446,12 @@ y_pred = rf.predict(X_test)
 
 # Model Accuracy, how often is the classifier correct?
 print("Accuracy:",metrics.accuracy_score(y_test, y_pred))
-```
+``
+Unfortunately, the test accuracy did not overpass that from the NN model. The maximum values were aroun 62%. This points again to the need of having more features to describe in a more precise way the system.
 
 
-### Installing
+## Conclusions
 
-A step by step series of examples that tell you how to get a development env running
 
-Say what the step will be
 
-```
-Give the example
-```
-
-And repeat
-
-```
-until finished
-```
-
-End with an example of getting some data out of the system or using it for a little demo
-
-## Running the tests
-
-Explain how to run the automated tests for this system
-
-### Break down into end to end tests
-
-Explain what these tests test and why
-
-```
-Give an example
-```
-
-### And coding style tests
-
-Explain what these tests test and why
-
-```
-Give an example
-```
-
-## Deployment
-
-Add additional notes about how to deploy this on a live system
-
-## Built With
-
-* [Dropwizard](http://www.dropwizard.io/1.0.2/docs/) - The web framework used
-* [Maven](https://maven.apache.org/) - Dependency Management
-* [ROME](https://rometools.github.io/rome/) - Used to generate RSS Feeds
-
-## Contributing
-
-Please read [CONTRIBUTING.md](https://gist.github.com/PurpleBooth/b24679402957c63ec426) for details on our code of conduct, and the process for submitting pull requests to us.
-
-## Versioning
-
-We use [SemVer](http://semver.org/) for versioning. For the versions available, see the [tags on this repository](https://github.com/your/project/tags). 
-
-## Authors
-
-* **Billie Thompson** - *Initial work* - [PurpleBooth](https://github.com/PurpleBooth)
-
-See also the list of [contributors](https://github.com/your/project/contributors) who participated in this project.
-
-## License
-
-This project is licensed under the MIT License - see the [LICENSE.md](LICENSE.md) file for details
-
-## Acknowledgments
-
-* Hat tip to anyone whose code was used
-* Inspiration
-* etc
 

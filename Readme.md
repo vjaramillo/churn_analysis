@@ -4,7 +4,7 @@ The code contained in this repository is related with the data analysis of selle
 
 The initial idea was to build a model to identify trends, and then to correlate the trends with a churn event, to eventually check if the initial hypothesis, that growing trends or declining trends can lead to a churn event.
 
-## Getting Started
+## Pre-check
 
 First of all, we load the .csv files as pandas dataframes.
 
@@ -15,6 +15,7 @@ churn_data = pd.read_csv('churn_data.csv', sep=';', decimal=",")
 We can check then the head of both dataframes
 
 for the seller_per we have
+
  
   | Unnamed: 0 |                         supplier_key  | report_date  |    ... |       units_ordered | units_ordered_b2b | units_refunded
   | -----------|---------------------------------------|--------------|--------|---------------------|-------------------|----------------
@@ -26,12 +27,64 @@ for the seller_per we have
 
 and for churn_data we have
 
-   Unnamed: 0                          supplier_key  churn_date
-0           1  031a13f1-5488-4ef8-a2fa-e55bb894c44e  2018-01-18
-1           2  03d96d8a-7178-4f7d-a8f2-8ef1a643ecd5  2016-12-09
-2           3  0574ad4e-5331-4e0b-9dd5-70d8fd3ba01b  2018-01-19
-3           4  073941ba-16e0-4a1f-825e-1cd94b9d50cb  2017-04-27
-4           5  082ba7d5-7b68-46e3-8a53-fc4d52104e28  2018-10-02
+  | Unnamed: 0 |                         supplier_key | churn_date
+--|------------|--------------------------------------|-----------  
+0 |          1 | 031a13f1-5488-4ef8-a2fa-e55bb894c44e | 2018-01-18
+1 |          2 | 03d96d8a-7178-4f7d-a8f2-8ef1a643ecd5 | 2016-12-09
+2 |          3 | 0574ad4e-5331-4e0b-9dd5-70d8fd3ba01b | 2018-01-19
+3 |          4 | 073941ba-16e0-4a1f-825e-1cd94b9d50cb | 2017-04-27
+4 |          5 | 082ba7d5-7b68-46e3-8a53-fc4d52104e28 | 2018-10-02
+
+From here we can remove the "Unnamed: 0" column, and format the dates columns to the proper type
+
+```python
+seller_per = seller_per.drop(['Unnamed: 0'], axis=1)
+churn_data = churn_data.drop(['Unnamed: 0'], axis=1)
+
+seller_per['report_date'] = pd.to_datetime(seller_per['report_date'], format='%Y-%m-%d')
+churn_data['churn_date']  = pd.to_datetime(churn_data['churn_date'], format='%Y-%m-%d')
+```
+In addition, we can check for NaN values and replace them with zeros
+
+```python
+print(seller_per.isnull().sum())
+seller_per = seller_per.fillna(0)
+```
+
+### EDA
+
+Now that we did a first check to the data, we will create a couple of dataframes, one for the clients that are still active, and one
+for the clients that resignated the services
+
+```python
+resign_seller_perf = []
+active_seller_perf = seller_per.copy()
+
+for i in range(0, len(churn_data['supplier_key'])):
+  seller_churn = seller_per.loc[seller_per['supplier_key'] == churn_data['supplier_key'].iloc[i]]
+  seller_churn = seller_churn.loc[seller_per['report_date'] <= churn_data['churn_date'].iloc[i]]
+  active_seller_perf = active_seller_perf.drop(active_seller_perf[active_seller_perf.supplier_key == churn_data['supplier_key'].iloc[i]].index)
+  resign_seller_perf.append(seller_churn)
+  
+resign_seller_perf = pd.concat(resign_seller_perf, axis=0)
+resign_seller_perf['Active'] = 0
+active_seller_perf['Active'] = 1
+
+seller_per_tidy = pd.concat([active_seller_perf, resign_seller_perf])
+
+supplier_keys = seller_per_tidy['supplier_key']
+churned_keys = churn_data['supplier_key']
+supplier_keys = supplier_keys.unique()
+churned_keys = churned_keys.unique()
+```
+Now that the data is properly organized (we know where the data of active and non-active clients is), we can 
+perform a visual inspection to identify trends or specific aspects of the data
+
+To plot the daily sales performance of a client during its whole operative period we can write:
+
+```python
+df = seller_per.drop(['supplier_key','ordered_product_sales_b2b','units_ordered_b2b','units_ordered','units_refunded'], axis=1)
+```
 
 ### Prerequisites
 

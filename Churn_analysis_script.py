@@ -188,10 +188,6 @@ churned_keys = churned_keys.unique()
 X_d = np.zeros((1442, len(supplier_keys)))
 X_m = np.zeros((49, len(supplier_keys)))
 
-# Columns of Year and month are added, so it can be easier to filter the data
-seller_per_tidy['Year'] = seller_per_tidy['report_date'].dt.year
-seller_per_tidy['Month'] = seller_per_tidy['report_date'].dt.month
-
 Y   = np.ones((len(supplier_keys),1))
 
 for i in range(0, len(supplier_keys)):
@@ -324,7 +320,7 @@ X_train, X_test, y_train, y_test = train_test_split(data, Target, test_size=0.3)
 rf = RandomForestClassifier(n_estimators = 50)
 
 # Train the model on training data
-rf.fit(X_train, y_train.ravel())
+rf.fit(X_train, y_train.values.ravel())
 y_pred = rf.predict(X_test)
 
 # Model Accuracy, how often is the classifier correct?

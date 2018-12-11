@@ -138,7 +138,7 @@ And obviously, there is no negative sales, so in the X-axis, the minimum value w
 After exploring few of the data sets, it can be seen that the probabilistic distributions of the data, in general, are very diverse and do not fit
 with a gaussian distribution, however, few of them suffer skewness.
 
-Some data sets have not so much entries (the shortest register has entries of around 4 months), and others have registers of almost the 4 years.
+Some data sets have not so much entries (the shortest register has entries of around 4 months), and others have registers of almost the 4 years (2014-2018).
 
 With the following script, we can compare some (Max-normalized) distributions of sales between different clients (4 in this case)
 
@@ -258,9 +258,9 @@ Predicting the sales of the clients incline or decline should be done with a mod
 
 ## Models
 
-Regardless of the issues identified, an initial approach was design, to identify churn event, regardles of the knowledge of sales incline/decline, but only considering monthly and daily sales.
+Regardless of the issues identified, an initial approach was designed to identify churn event regardles of the knowledge of sales incline/decline, but only considering monthly and daily sales.
 
-The following code was use to extrac the data of sales per day per client:
+The following code was use to extract the data of sales per day per client:
 
 ```python
 # Two arrays are created
@@ -269,12 +269,6 @@ The following code was use to extrac the data of sales per day per client:
 
 X_d = np.zeros((1442, len(supplier_keys)))
 X_m = np.zeros((49, len(supplier_keys)))
-
-# Columns of Year and month are added, so it can be easier to 
-seller_per_tidy['Year'] = seller_per_tidy['report_date'].dt.year
-seller_per_tidy['Month'] = seller_per_tidy['report_date'].dt.month
-
-# An array to identify the active, non-active clients is also created
 
 Y   = np.ones((len(supplier_keys),1))
 
@@ -305,14 +299,17 @@ X_m = X_m.transpose()
 
 ```
 
-After getting the data, we Max-normalize it
+After getting the data, we Max-normalize it and leave it ready for the training.
 
 ```python
 X_mnorm = normalize(X_m, axis=1, norm='max')
 X_dnorm = normalize(X_d, axis=1, norm='max')
 X_norm = np.hstack([X_mnorm, X_dnorm])
 ```
+
 ### 1layer NN
+
+The code to train the NN model is as follows. At the end of each training accuracy and loss are plotted.
 
 ```python
 X_train, X_test, y_train, y_test = train_test_split(X_norm, Y, test_size=0.33)
@@ -336,14 +333,15 @@ plt.plot(history.history['acc'])
 plt.figure(2)
 plt.plot(history.history['loss'])
 ```
+
 A manual tuning and training leads eventually to a NN with an test set accuracy of around 76% and a train set accuracy close to 100%.
-This shows that the model is overfitting. The model that achieved this accuracy is saved as "model_weights766.h5".
+This shows that the model is overfitting. (The model that achieved this accuracy is saved as "model_weights766.h5").
 
-In general, the models trained with this data (daily+monthly sales per client), the model converges very fast (under 50 epochs in some cases), showing that the data is highly correlated. Something that makes sense, given the nature of the data, previously commented.
+In general, when trained with this data (daily+monthly sales per client), the model converges very fast (under 50 epochs in some cases), showing that the data is highly correlated. Something that makes sense, given the nature of the data, previously commented.
 
-It has to be taken into account that there is an small amount of data available. We have data from 284 clients, from which 127 have resigned the services, so the threshold to determine if the a classification system is able to detect a churn event is (1 - 127/284) * 100 =  55.3%, in this sense, the achieved model is predicting a bit more better than just guessing.
+It has to be taken into account that there is an small amount of data available. We have data from 284 clients, from which 127 have resigned the services, so the threshold to determine if the a classification system is able to detect a churn event is (1 - 127/284) * 100 =  55.3%, in this sense, the achieved model is predicting a bit more better than a random guess.
 
-One approach to overcome this issue of overfitting, would be to have more data, or to include a bigger amount of features in for the training. Aiming for this, an statistical analysis of the monthly sales was conducted with the following code:
+One approach to overcome this issue of overfitting, would be to have more data, or to include a bigger amount of features in for the training. Aiming for this, an statistical data extraction of the monthly sales was conducted with the following code:
 
 ```python
 stats_var_per_day = seller_per_tidy.drop(['supplier_key','ordered_product_sales_b2b','units_ordered_b2b','units_ordered','units_refunded','Year','Month','Active'], axis=1)
@@ -367,26 +365,30 @@ for i in range(0, len(supplier_keys)):
     STATS_arr = np.vstack([STATS_arr, stats_v])
 ```
 
-
-The network was retrained using as input data:
+Then the network was retrained using as input data:
 
 ```python
 X_norm = np.hstack([X_mnorm, X_dnorm, STATS_arr])
 ```
-however, not significant accuracy increase was perceived.
+
+however, not significant accuracy increase was perceived, indicating that or either the new data was not statistically significant or that in reality more training sets are required.
+
+Is important to notice that a hyperparameter grid search could be performed, in order to optimize the performance of the model. Such search was not conducted due to lack of time.
+
 
 ### Random Forest Classifier
 
 As an approach to solve the issue of overfitting suffered by the NN, a random forest classifier was trained.
 
-First, the data was prepared for the RandomForest
+First, the data was prepared for the RandomForest.
 
-Each column sales_i of the dataframe, is the client sales -i months before the last report.
+
+A dataframe with sales per month prior to last register was created. Each column sales_i of the dataframe, is the client sales -i months before the last report.
 In total, the maximum amount of monthtly registers is 49, however this is not true for every client, so for some entries there will be zeros.
 
-In addition, the statistical parameters of the monthly sales are included.
+In addition, the statistical parameters of the monthly sales were included.
 
-The statistical parameters considered are:
+The statistical parameters considered were:
 
 * Mean
 * Standard deviation
@@ -431,6 +433,8 @@ data = pd.DataFrame({
 })
 ```
 
+An to build the forest the following code was used:
+
 ```python
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.ensemble import RandomForestRegressor
@@ -448,12 +452,12 @@ y_pred = rf.predict(X_test)
 print("Accuracy:",metrics.accuracy_score(y_test, y_pred))
 ```
 
-Unfortunately, the test accuracy did not overpass that from the NN model. The maximum values were aroun 62%. This points again to the need of having more features to describe in a more precise way the system.
+Few iterations were conducted, changing the number of estimators of the forest, however, in general the test accuracy did not overpass that from the NN model. The maximum values were aroun 62%. This points again to the need of having more features to describe in a more precise way the system.
 
 
-## Conclusions
+## Conclusions and final comments
 
-The initial hypothesis given by Customer Service, could be intuitive from a general point of view, however, after having a look to the data, many aspects contribute to impossibility to apply such approach.
+The initial hypothesis given by Customer Service, could be intuitive from a general point of view, however, after having a look to the data, many aspects contribute to impossibility to apply such approach, at least at first glance.
 
 Three main aspects of the data make it more difficult than one could expect. These aspects are:
 
@@ -461,9 +465,9 @@ Three main aspects of the data make it more difficult than one could expect. The
 * Probability densities diversity.
 * Lack of extra info (e.g. categorical variables) that could help to group the data and classify it more easily.
 
-From these three aspects, one would expect that the only one that could be solved or improved is the acquisition of extra info from each client. Since the variability of data from clients and its probability densities will remain variable, at least knowing some insights from each type of client, extra information could be feed to the model, thus improving the final accuracy value.
+From these three aspects, one would expect that the only one that could be solved or improved is the acquisition of extra info from each client. Since the variability of data from clients and its probability densities will remain variable. In this sense, if extra insights / information from each type of client could be feed to the model, it should help to improve the final accuracy value.
 
-A final approach, that was not tried, due to the lack of time, would be to create one regression model for each client using NN. After having the models of all the clients, the next step would be to search for differences between models of clients that resignated and clients still active. It would be expected that the correlation between models of active clients, will be higher than the correlation between active vs non-active clients. This is an approach used in risk models for credit granting.
+A final approach, that was not tried, due to the lack of time, would be to create one regression model for each client using NN. After having the models of all the clients, the next step would be to search for differences between models of clients that resignated and clients still active. It would be expected that the correlation between models of active clients, will be higher than the correlation between active vs non-active clients. This is an approach used in risk models for credit granting, and I believe could be used for this case as well.
 
 
 

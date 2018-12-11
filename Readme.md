@@ -446,12 +446,24 @@ y_pred = rf.predict(X_test)
 
 # Model Accuracy, how often is the classifier correct?
 print("Accuracy:",metrics.accuracy_score(y_test, y_pred))
-``
+```
+
 Unfortunately, the test accuracy did not overpass that from the NN model. The maximum values were aroun 62%. This points again to the need of having more features to describe in a more precise way the system.
 
 
 ## Conclusions
 
+The initial hypothesis given by Customer Service, could be intuitive from a general point of view, however, after having a look to the data, many aspects contribute to impossibility to apply such approach.
+
+Three main aspects of the data make it more difficult than one could expect. These aspects are:
+
+* Variability in the amount of available data per client (report_dates per client).
+* Probability densities diversity.
+* Lack of extra info (e.g. categorical variables) that could help to group the data and classify it more easily.
+
+From these three aspects, one would expect that the only one that could be solved or improved is the acquisition of extra info from each client. Since the variability of data from clients and its probability densities will remain variable, at least knowing some insights from each type of client, extra information could be feed to the model, thus improving the final accuracy value.
+
+A final approach, that was not tried, due to the lack of time, would be to create one regression model for each client using NN. After having the models of all the clients, the next step would be to search for differences between models of clients that resignated and clients still active. It would be expected that the correlation between models of active clients, will be higher than the correlation between active vs non-active clients. This is an approach used in risk models for credit granting.
 
 
 

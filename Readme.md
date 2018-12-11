@@ -44,6 +44,10 @@ churn_data = churn_data.drop(['Unnamed: 0'], axis=1)
 
 seller_per['report_date'] = pd.to_datetime(seller_per['report_date'], format='%Y-%m-%d')
 churn_data['churn_date']  = pd.to_datetime(churn_data['churn_date'], format='%Y-%m-%d')
+
+# We add columns of year and month for easier data grouping
+seller_per['Year'] = seller_per['report_date'].dt.year
+seller_per['Month'] = seller_per['report_date'].dt.month
 ```
 In addition, we can check for NaN values and replace them with zeros
 
@@ -139,6 +143,7 @@ Some data sets have not so much entries (the shortest register has entries of ar
 With the following script, we can compare some (Max-normalized) distributions of sales between different clients (4 in this case)
 
 ```python
+df = seller_per.drop(['supplier_key','ordered_product_sales_b2b','units_ordered_b2b','units_ordered','units_refunded','Year','Month'], axis=1)
 df = df.sort_values(by='report_date') 
 
 df2 = df.loc[seller_per['supplier_key'] == supplier_keys[0]]
@@ -257,7 +262,7 @@ Regardless of the issues identified, an initial approach was design, to identify
 
 The following code was use to extrac the data of sales per day per client:
 
-```
+```python
 # Two arrays are created
 # An array whose columns are the sales per day (1442 registers)
 # An array whose columns are the sales per month (49 registers)
@@ -307,7 +312,30 @@ X_mnorm = normalize(X_m, axis=1, norm='max')
 X_dnorm = normalize(X_d, axis=1, norm='max')
 X_norm = np.hstack([X_mnorm, X_dnorm])
 ```
+### 1layer NN
 
+```python
+X_train, X_test, y_train, y_test = train_test_split(X_morm, Y, test_size=0.33)
+
+model = Sequential()
+
+n_cols = X_train.shape[1]
+
+model.add(Dense(80, activation = 'relu', input_shape=(n_cols,), kernel_initializer='he_normal'))
+model.add(Dropout(0.2))
+model.add(Dense(1, activation = 'sigmoid', kernel_initializer='he_normal'))
+
+model.compile(optimizer = 'adam', loss = 'binary_crossentropy', metrics=['accuracy'])
+history = model.fit(X_train, y_train, epochs = 100, batch_size = 16, verbose = 0)
+
+loss, acc = model.evaluate(X_test, y_test)
+print('Test set accuracy = ', acc)
+
+plt.figure(1)
+plt.plot(history.history['acc'])
+plt.figure(2)
+plt.plot(history.history['loss'])
+```
 
 ### Installing
 

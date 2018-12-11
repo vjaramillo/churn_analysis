@@ -15,13 +15,14 @@ churn_data = pd.read_csv('churn_data.csv', sep=';', decimal=",")
 We can check then the head of both dataframes
 
 for the seller_per we have
-
-   Unnamed: 0                          supplier_key report_date       ...        units_ordered  units_ordered_b2b  units_refunded
-0           1  00179d2b-e696-4536-b530-e25ed838fae6  2018-10-24       ...                  214                  0               0
-1           2  00179d2b-e696-4536-b530-e25ed838fae6  2018-10-23       ...                  193                  0               0
-2           3  00179d2b-e696-4536-b530-e25ed838fae6  2018-10-22       ...                  188                  0               0
-3           4  00179d2b-e696-4536-b530-e25ed838fae6  2018-10-21       ...                  160                  0               0
-4           5  00179d2b-e696-4536-b530-e25ed838fae6  2018-10-20       ...                   86                  0               0
+ 
+  | Unnamed: 0 |                         supplier_key  | report_date  |    ... |       units_ordered | units_ordered_b2b | units_refunded
+  | -----------|---------------------------------------|--------------|--------|---------------------|-------------------|----------------
+0 |          1 | 00179d2b-e696-4536-b530-e25ed838fae6  | 2018-10-24   |    ... |                 214 |                 0 |              0
+1 |          2 | 00179d2b-e696-4536-b530-e25ed838fae6  | 2018-10-23   |    ... |                 193 |                 0 |              0
+2 |          3 | 00179d2b-e696-4536-b530-e25ed838fae6  | 2018-10-22   |    ... |                 188 |                 0 |              0
+3 |          4 | 00179d2b-e696-4536-b530-e25ed838fae6  | 2018-10-21   |    ... |                 160 |                 0 |              0
+4 |          5 | 00179d2b-e696-4536-b530-e25ed838fae6  | 2018-10-20   |    ... |                  86 |                 0 |              0
 
 and for churn_data we have
 

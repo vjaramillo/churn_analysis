@@ -315,7 +315,7 @@ X_norm = np.hstack([X_mnorm, X_dnorm])
 ### 1layer NN
 
 ```python
-X_train, X_test, y_train, y_test = train_test_split(X_morm, Y, test_size=0.33)
+X_train, X_test, y_train, y_test = train_test_split(X_norm, Y, test_size=0.33)
 
 model = Sequential()
 
@@ -336,6 +336,114 @@ plt.plot(history.history['acc'])
 plt.figure(2)
 plt.plot(history.history['loss'])
 ```
+A manual tuning and training leads eventually to a NN with an test set accuracy of around 76% and a train set accuracy close to 100%.
+This shows that the model is overfitting. The model that achieved this accuracy is saved as "model_weights766.h5".
+
+In general, the models trained with this data (daily+monthly sales per client), the model converges very fast (under 50 epochs in some cases), showing that the data is highly correlated. Something that makes sense, given the nature of the data, previously commented.
+
+It has to be taken into account that there is an small amount of data available. We have data from 284 clients, from which 127 have resigned the services, so the threshold to determine if the a classification system is able to detect a churn event is (1 - 127/284) * 100 =  55.3%, in this sense, the achieved model is predicting a bit more better than just guessing.
+
+One approach to overcome this issue of overfitting, would be to have more data, or to include a bigger amount of features in for the training. Aiming for this, an statistical analysis of the monthly sales was conducted with the following code:
+
+```python
+stats_var_per_day = seller_per_tidy.drop(['supplier_key','ordered_product_sales_b2b','units_ordered_b2b','units_ordered','units_refunded','Year','Month','Active'], axis=1)
+STATS_arr = []
+
+for i in range(0, len(supplier_keys)):
+  df = stats_var_per_day.loc[seller_per_tidy['supplier_key'] == supplier_keys[i]]
+  df = df.ordered_product_sales / df.ordered_product_sales.max()
+  df = df[df != 0]
+  
+  skew = df.skew()
+  stats = df.describe()
+    
+  stats_v = np.array([stats[1],stats[2],stats[4],stats[5],stats[6],skew])
+  stats_v.shape = (1,6)
+  
+  if i == 0:
+    STATS_arr = stats_v
+
+  else:
+    STATS_arr = np.vstack([STATS_arr, stats_v])
+```
+
+
+The network was retrained using as input data:
+
+```python
+X_norm = np.hstack([X_mnorm, X_dnorm, STATS_arr])
+```
+however, not significant accuracy increase was perceived.
+
+### Random Forest Classifier
+
+As an approach to solve the issue of overfitting suffered by the NN, a random forest classifier was trained.
+
+First, the data was prepared for the RandomForest
+
+Each column sales_i of the dataframe, is the client sales -i months before the last report.
+In total, the maximum amount of monthtly registers is 49, however this is not true for every client, so for some entries there will be zeros.
+
+In addition, the statistical parameters of the monthly sales are included.
+
+The parameters
+
+```python
+Target = pd.DataFrame(Y,columns=['Active_client'])
+
+data = pd.DataFrame({
+    'sales_1':X_m[:,-1],
+    'sales_2':X_m[:,-2],
+    'sales_3':X_m[:,-3],
+    'sales_4':X_m[:,-4],
+    'sales_5':X_m[:,-5],
+    'sales_6':X_m[:,-6],
+    'sales_7':X_m[:,-7],
+    'sales_8':X_m[:,-8],
+    'sales_9':X_m[:,-9],
+    'sales_10':X_m[:,-10],
+    'sales_11':X_m[:,-11],
+    'sales_12':X_m[:,-12],
+    'sales_13':X_m[:,-13],
+    'sales_14':X_m[:,-14],
+    'sales_15':X_m[:,-15],
+    'sales_16':X_m[:,-16],
+    'sales_17':X_m[:,-17],
+    'sales_18':X_m[:,-18],
+    'sales_19':X_m[:,-19],
+    'sales_20':X_m[:,-20],
+    'sales_21':X_m[:,-21],
+    'sales_22':X_m[:,-22],
+    'sales_23':X_m[:,-23],
+    'Mean': STATS_arr[:,0], 
+    'Std':  STATS_arr[:,1],
+    '25%':STATS_arr[:,2],
+    '50%':STATS_arr[:,3],
+    '75%':STATS_arr[:,4],
+    'skew': STATS_arr[:,5]
+})
+```
+
+"""**Random Forest**"""
+
+from sklearn.model_selection import train_test_split
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.ensemble import RandomForestRegressor
+from sklearn import metrics
+
+X_train, X_test, y_train, y_test = train_test_split(data, Target, test_size=0.3)
+
+# Instantiate model with 1000 decision trees
+rf = RandomForestClassifier(n_estimators = 50)
+
+# Train the model on training data
+rf.fit(X_train, y_train)
+y_pred = rf.predict(X_test)
+
+# Model Accuracy, how often is the classifier correct?
+print("Accuracy:",metrics.accuracy_score(y_test, y_pred))
+
+
 
 ### Installing
 

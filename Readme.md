@@ -27,6 +27,7 @@ for the seller_per we have
 
 and for churn_data we have
 
+
   | Unnamed: 0 |                         supplier_key | churn_date
   |------------|--------------------------------------|-----------  
 0 |          1 | 031a13f1-5488-4ef8-a2fa-e55bb894c44e | 2018-01-18
@@ -54,7 +55,8 @@ seller_per = seller_per.fillna(0)
 ### EDA
 
 Now that we did a first check to the data, we will create a couple of dataframes, one for the clients that are still active, and one
-for the clients that resignated the services
+for the clients that resignated the services:
+
 
 ```python
 resign_seller_perf = []
@@ -77,6 +79,7 @@ churned_keys = churn_data['supplier_key']
 supplier_keys = supplier_keys.unique()
 churned_keys = churned_keys.unique()
 ```
+
 Now that the data is properly organized (we know where the data of active and non-active clients is), we can 
 perform a visual inspection to identify trends or specific aspects of the data
 
@@ -84,7 +87,27 @@ To plot the daily sales performance of a client during its whole operative perio
 
 ```python
 df = seller_per.drop(['supplier_key','ordered_product_sales_b2b','units_ordered_b2b','units_ordered','units_refunded'], axis=1)
+
+# There are supplier registers, so we can select any of those by changing the value of i
+i = 1
+df = df.loc[seller_per['supplier_key'] == supplier_keys[i]]
+
+df.index = df.report_date 
+df2 = df.sort_values(by='report_date') 
+
+plt.figure(1)
+plt.plot_date(df2.report_date, df2.ordered_product_sales, '-')
+plt.figure(2)
+plt.hist(df2.ordered_product_sales, bins = 100)
+
 ```
+
+These two figures give:
+
+![alt text](https://github.com/vjaramillo/churn_analysis/blob/master/sales_per_day_i1.png)
+
+![alt text](https://github.com/vjaramillo/churn_analysis/blob/master/sales_per_day_hist_i1.png)
+
 
 ### Prerequisites
 

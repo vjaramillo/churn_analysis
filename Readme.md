@@ -102,11 +102,31 @@ plt.hist(df2.ordered_product_sales, bins = 100)
 
 ```
 
-These two figures give:
+These two figures give the time wave form of daily sales and the histogram:
 
 ![alt text](https://github.com/vjaramillo/churn_analysis/blob/master/sales_per_day_i1.png)
 
 ![alt text](https://github.com/vjaramillo/churn_analysis/blob/master/sales_per_day_hist_i1.png)
+
+The histogram is heavily dominated by the amount of values equal to zero. Apparently, during many days he had zero sales.
+
+This happens to many other clients, unfortunately, since this does not allows to see the proper distribution.
+
+In order to see the distribution, we will remove those entries in which the sales were zero and plot the histogram again
+
+```python
+df3 = df2.ordered_product_sales
+
+df3.fillna(0, inplace=True)
+
+df3 = df3[df3 != 0]
+
+plt.figure(2)
+plt.hist(df3, bins = 100)
+
+```
+
+![alt text](https://github.com/vjaramillo/churn_analysis/blob/master/sales_per_day_hist_i1_wo_zeros.png)
 
 
 ### Prerequisites

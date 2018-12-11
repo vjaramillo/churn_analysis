@@ -190,8 +190,7 @@ sns.distplot(df5_1,  ax=ax[1][1])
 
 The first two from the top are similar (corresponding to i = 0 and i = 90), however the two from the bottom are very different (i = 230 and i = 180).
 
-Of course, only by looking at four, nothing can be concluded, however, the fact that many of them suffer skewness to the right, can be useful for 
-correcting the data distributions by applying a log to the X-axis.
+Of course, only by looking at four, nothing can be concluded, however, further analysis of the datasets shows that there is a high diversity of distributions, and most of them show some degree of skewness.
 
 Another analysis conducted, was the trends of the data, for that analysis the following script was used:
 
@@ -223,6 +222,7 @@ decomposition2 = sm.tsa.seasonal_decompose(df2.ordered_product_sales, model='add
 decomposition3 = sm.tsa.seasonal_decompose(df3.ordered_product_sales, model='additive')
 decomposition4 = sm.tsa.seasonal_decompose(df4.ordered_product_sales, model='additive')
 decomposition5 = sm.tsa.seasonal_decompose(df5.ordered_product_sales, model='additive')
+
 plt.figure(1)
 trend2 = decomposition2.trend
 trend3 = decomposition3.trend
@@ -242,25 +242,72 @@ plt.gca().legend(('i = 0','i = 90','i = 230','i = 180'))
 
 With regards to the trends, the comparison is even more complicated than the comparison of probabiltiy distributions.
 
-As can be seen in the previous figure, even Max-normalizing the data, does not allow to see specific similarities in the trend patterns.
+As can be seen in the previous figure, even Max-normalizing the data, does not allow to see specific similarities in the trend patterns. The figure only shows 4, but again, having a look to the multiple data sets, it can be seen that, even though, some datasets have similar trends, in general the trends are very diverse. In addition, not all have the same lenght, or start at the same periods of time.
 
-The figure only shows 4, but again, having a look to the multiple data sets, it can be seen that, even though, some datasets have similar trends,
+In this sense, it would be very complicated to build a single model that is able to predict, with a good level of certainty, all the sales trends. This, mostly due to the differences in distribution, trends and amount of available data entries.
 
-In general the trends are very diverse.
+In the same way, the sales trends of both type of clients (active, non-active) have significant declines or inclines, and in some cases the client resigns, but in others he continues using the services, so, to consider an incline or decline (only), for predicting a churn event, could result in false positives.
 
-In this sense, it would be very complicated to build a model that is able to predict, with a good level of certainty, all the sales trends. This, mostly due to the differences in distribution, trends and amount of available registers.
+Predicting the sales of the clients incline or decline should be done with a model exclusive for each client (or clusters of clients), but preferably, these models should be able to use additional categorical variables, e.g. type of product (consumer electronics, spare parts, decoration, etc.), age of seller, time active, seller capital, etc. In this way, it would be expected to have more information to feed the models, thus allowing for higher accuracy in the predictions of churn events.
 
-In the same way, the sales trends of both type of clients (active, non-active) have significant drops or increases, and in some cases the client resigns, but in others he continues using the services, so, to consider an incline or decline (only), for predicting a churn event, could result in false positives.
 
-Predicting the sales of the clients incline or decline should be done with models, exclusive for each client, but this would be only one part of the equation. In general, more info (preferably categorical) is needed, e.g. type of product (consumer electronics, spare parts, decoration, etc.), age of seller, time active, seller capital, etc.
+## Models
 
-### Prerequisites
+Regardless of the issues identified, an initial approach was design, to identify churn event, regardles of the knowledge of sales incline/decline, but only considering monthly and daily sales.
 
-What things you need to install the software and how to install them
+The following code was use to extrac the data of sales per day per client:
 
 ```
-Give examples
+# Two arrays are created
+# An array whose columns are the sales per day (1442 registers)
+# An array whose columns are the sales per month (49 registers)
+
+X_d = np.zeros((1442, len(supplier_keys)))
+X_m = np.zeros((49, len(supplier_keys)))
+
+# Columns of Year and month are added, so it can be easier to 
+seller_per_tidy['Year'] = seller_per_tidy['report_date'].dt.year
+seller_per_tidy['Month'] = seller_per_tidy['report_date'].dt.month
+
+# An array to identify the active, non-active clients is also created
+
+Y   = np.ones((len(supplier_keys),1))
+
+for i in range(0, len(supplier_keys)):
+  s_d = seller_per_tidy.loc[seller_per_tidy['supplier_key'] == supplier_keys[i]].ordered_product_sales.tolist()
+  s_m = seller_per_tidy.loc[seller_per_tidy['supplier_key'] == supplier_keys[i]].groupby(['Year','Month']).sum().ordered_product_sales.tolist()
+      
+  s_d = np.array(s_d)
+  s_m = np.array(s_m)
+  
+  s_d.shape = (len(s_d),1)
+  s_m.shape = (len(s_m), 1)  
+  
+  s_d = np.flip(s_d,0)
+  s_m = np.flip(s_m,0)
+  
+  s_d_norm = normalize(s_d, axis=1, norm='max')
+  s_m_norm = normalize(s_m, axis=1, norm='max')
+  
+  if (supplier_keys[i] in churned_keys):
+    Y[i] = 0
+    
+  X_d[ X_d.shape[0] - len(s_d) : X_d.shape[0] , [i]] = s_d
+  X_m[ X_m.shape[0] - len(s_m) : X_m.shape[0] , [i]] = s_m
+  
+X_d = X_d.transpose()
+X_m = X_m.transpose()
+
 ```
+
+After getting the data, we Max-normalize it
+
+```python
+X_mnorm = normalize(X_m, axis=1, norm='max')
+X_dnorm = normalize(X_d, axis=1, norm='max')
+X_norm = np.hstack([X_mnorm, X_dnorm])
+```
+
 
 ### Installing
 

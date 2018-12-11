@@ -52,7 +52,7 @@ print(seller_per.isnull().sum())
 seller_per = seller_per.fillna(0)
 ```
 
-### EDA
+## EDA
 
 Now that we did a first check to the data, we will create a couple of dataframes, one for the clients that are still active, and one
 for the clients that resignated the services:
@@ -127,6 +127,65 @@ plt.hist(df3, bins = 100)
 ```
 
 ![alt text](https://github.com/vjaramillo/churn_analysis/blob/master/sales_per_day_hist_i1_wo_zeros.png)
+
+We can see in the plot that the daily sales data is skewed. This happens to many clients, since they sell, in general, small amounts per day most of the time.
+And obviously, there is no negative sales, so in the X-axis, the minimum value will be always 0 (unless we remove that data).
+
+After exploring few of the data sets, it can be seen that the probabilistic distribution of the data, in general, does not follows any pattern (e.g., does not fit
+with a gaussian distribution, or with skewed distribution, etc.).
+
+Some data sets have not so much entries (the shortest register has entries of around 4 months), and others have registers of almost the 4 years.
+
+With the following script, we can compare some distributions of sales between different clients (4 in this case)
+
+```python
+df = df.sort_values(by='report_date') 
+
+df2 = df.loc[seller_per['supplier_key'] == supplier_keys[0]]
+df2_1 = df2.ordered_product_sales
+df2_1.fillna(0, inplace=True)
+df2_1 = df2_1[df2_1 != 0] / df2_1.max()
+
+df3 = df.loc[seller_per['supplier_key'] == supplier_keys[90]]
+df3_1 = df3.ordered_product_sales
+df3_1.fillna(0, inplace=True)
+df3_1 = df3_1[df3_1 != 0]/  df3_1.max()
+
+df4 = df.loc[seller_per['supplier_key'] == supplier_keys[230]]
+df4_1 = df4.ordered_product_sales
+df4_1.fillna(0, inplace=True)
+df4_1 = df4_1[df4_1 != 0] / df4_1.max()
+
+df5 = df.loc[seller_per['supplier_key'] == supplier_keys[180]]
+df5_1 = df5.ordered_product_sales
+df5_1.fillna(0, inplace=True)
+df5_1 = df5_1[df5_1 != 0] / df5_1.max()
+
+fig, ax = plt.subplots(figsize=(12,7), ncols=2, nrows=2)
+
+left   =  0.125  # the left side of the subplots of the figure
+right  =  0.9    # the right side of the subplots of the figure
+bottom =  0.1    # the bottom of the subplots of the figure
+top    =  0.9    # the top of the subplots of the figure
+wspace =  .5     # the amount of width reserved for blank space between subplots
+hspace =  1.1    # the amount of height reserved for white space between subplots
+
+# This function actually adjusts the sub plots using the above paramters
+plt.subplots_adjust(
+    left    =  left, 
+    bottom  =  bottom, 
+    right   =  right, 
+    top     =  top, 
+    wspace  =  wspace, 
+    hspace  =  hspace
+)
+
+sns.distplot(df2_1,  ax=ax[0][0])
+sns.distplot(df3_1,  ax=ax[0][1])
+sns.distplot(df4_1,  ax=ax[1][0])
+sns.distplot(df5_1,  ax=ax[1][1])
+```
+![alt text](https://github.com/vjaramillo/churn_analysis/blob/master/comparison_distributions.png)
 
 
 ### Prerequisites

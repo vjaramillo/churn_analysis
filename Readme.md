@@ -131,12 +131,12 @@ plt.hist(df3, bins = 100)
 We can see in the plot that the daily sales data is skewed. This happens to many clients, since they sell, in general, small amounts per day most of the time.
 And obviously, there is no negative sales, so in the X-axis, the minimum value will be always 0 (unless we remove that data).
 
-After exploring few of the data sets, it can be seen that the probabilistic distribution of the data, in general, does not follows any pattern (e.g., does not fit
-with a gaussian distribution, or with skewed distribution, etc.).
+After exploring few of the data sets, it can be seen that the probabilistic distributions of the data, in general, are very diverse and do not fit
+with a gaussian distribution, however, few of them suffer skewness.
 
 Some data sets have not so much entries (the shortest register has entries of around 4 months), and others have registers of almost the 4 years.
 
-With the following script, we can compare some distributions of sales between different clients (4 in this case)
+With the following script, we can compare some (Max-normalized) distributions of sales between different clients (4 in this case)
 
 ```python
 df = df.sort_values(by='report_date') 
@@ -185,8 +185,74 @@ sns.distplot(df3_1,  ax=ax[0][1])
 sns.distplot(df4_1,  ax=ax[1][0])
 sns.distplot(df5_1,  ax=ax[1][1])
 ```
+
 ![alt text](https://github.com/vjaramillo/churn_analysis/blob/master/comparison_distributions.png)
 
+The first two from the top are similar (corresponding to i = 0 and i = 90), however the two from the bottom are very different (i = 230 and i = 180).
+
+Of course, only by looking at four, nothing can be concluded, however, the fact that many of them suffer skewness to the right, can be useful for 
+correcting the data distributions by applying a log to the X-axis.
+
+Another analysis conducted, was the trends of the data, for that analysis the following script was used:
+
+
+```python
+df = seller_per.drop(['supplier_key','ordered_product_sales_b2b','units_ordered_b2b','units_ordered','units_refunded','Year','Month'], axis=1)
+df2 = df.loc[seller_per['supplier_key'] == supplier_keys[0]]
+df2 = df2.sort_values(by='report_date')
+
+df3 = df.loc[seller_per['supplier_key'] == supplier_keys[90]]
+df3 = df3.sort_values(by='report_date') 
+
+df4 = df.loc[seller_per['supplier_key'] == supplier_keys[230]]
+df4 = df4.sort_values(by='report_date') 
+
+df5 = df.loc[seller_per['supplier_key'] == supplier_keys[180]]
+df5 = df5.sort_values(by='report_date') 
+
+df2.index = df2.report_date 
+df3.index = df3.report_date 
+df4.index = df4.report_date 
+df5.index = df5.report_date 
+
+from pylab import rcParams
+
+rcParams['figure.figsize'] = 12, 7
+
+decomposition2 = sm.tsa.seasonal_decompose(df2.ordered_product_sales, model='additive')
+decomposition3 = sm.tsa.seasonal_decompose(df3.ordered_product_sales, model='additive')
+decomposition4 = sm.tsa.seasonal_decompose(df4.ordered_product_sales, model='additive')
+decomposition5 = sm.tsa.seasonal_decompose(df5.ordered_product_sales, model='additive')
+plt.figure(1)
+trend2 = decomposition2.trend
+trend3 = decomposition3.trend
+trend4 = decomposition4.trend
+trend5 = decomposition5.trend
+
+plt.plot(trend2 / trend2.max())
+plt.plot(trend3 / trend3.max())
+plt.plot(trend4 / trend4.max())
+plt.plot(trend5 / trend5.max())
+plt.gca().legend(('i = 0','i = 90','i = 230','i = 180'))
+
+```
+![alt text](https://github.com/vjaramillo/churn_analysis/blob/master/comparison_trends.png)
+
+## Analysis
+
+With regards to the trends, the comparison is even more complicated than the comparison of probabiltiy distributions.
+
+As can be seen in the previous figure, even Max-normalizing the data, does not allow to see specific similarities in the trend patterns.
+
+The figure only shows 4, but again, having a look to the multiple data sets, it can be seen that, even though, some datasets have similar trends,
+
+In general the trends are very diverse.
+
+In this sense, it would be very complicated to build a model that is able to predict, with a good level of certainty, all the sales trends. This, mostly due to the differences in distribution, trends and amount of available registers.
+
+In the same way, the sales trends of both type of clients (active, non-active) have significant drops or increases, and in some cases the client resigns, but in others he continues using the services, so, to consider an incline or decline (only), for predicting a churn event, could result in false positives.
+
+Predicting the sales of the clients incline or decline should be done with models, exclusive for each client, but this would be only one part of the equation. In general, more info (preferably categorical) is needed, e.g. type of product (consumer electronics, spare parts, decoration, etc.), age of seller, time active, seller capital, etc.
 
 ### Prerequisites
 

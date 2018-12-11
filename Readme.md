@@ -424,8 +424,7 @@ data = pd.DataFrame({
 })
 ```
 
-"""**Random Forest**"""
-
+```python
 from sklearn.model_selection import train_test_split
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.ensemble import RandomForestRegressor
@@ -442,7 +441,7 @@ y_pred = rf.predict(X_test)
 
 # Model Accuracy, how often is the classifier correct?
 print("Accuracy:",metrics.accuracy_score(y_test, y_pred))
-
+```
 
 
 ### Installing
